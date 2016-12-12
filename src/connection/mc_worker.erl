@@ -38,7 +38,13 @@ disconnect(Worker) ->
 
 init(Options) ->
   proc_lib:init_ack({ok, self()}),
-  {ok, Socket} = mc_auth:connect_to_database(Options),
+  {ok, Socket} = case mc_auth:connect_to_database(Options) of
+                   {ok, S} -> {ok, S};
+                   Error ->
+                     lager:warning("conexion a mongo fallida [ ~p ][ ~p ]",
+                       [Options, Error]),
+                     Error
+                 end,
   ConnState = form_state(Options),
   try_register(Options),
   NetModule = get_set_opts_module(Options),
